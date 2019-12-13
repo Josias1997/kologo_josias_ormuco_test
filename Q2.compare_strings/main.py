@@ -5,7 +5,7 @@
 
 
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 def test_equality(first_string, second_string):
 	try:
@@ -15,5 +15,5 @@ def test_equality(first_string, second_string):
 			return f'{first_string} is less than {second_string}'
 		else:
 			return f'{first_string} is equal to {second_string}'
-	except TypeError:
-		print('Invalid string format')
+	except InvalidOperation:
+		return 'Non-numeric string'

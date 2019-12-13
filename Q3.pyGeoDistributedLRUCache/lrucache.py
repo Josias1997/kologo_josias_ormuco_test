@@ -8,12 +8,15 @@
 # updating its position in the ordering. These nodes are also placed in the
 # hash table under their associated key. The hash table allows efficient
 # lookup of values by key.
+# the cache can expire if a timeout is provided each time an item is used
+# is timeout value is automatically reset. An item expires when he's not used 
+# and it timeout is reached.
 
 from threading import Timer, RLock
 from time import time
 
 class Node:
-    def __init__(self, key: int, value: int):
+    def __init__(self, key, value):
         self.key = key
         self.value = value
         self.next = None
@@ -25,9 +28,9 @@ class Node:
 
     
 class LRUCache:
-    def __init__(self, size: int, expires=None):
+    def __init__(self, size: int, expires_at=None):
         self.size = size
-        self.expires = expires
+        self.expires_at = expires_at
         self.cache = dict()
         self.head = Node(0,0)
         self.tail = Node(0,0)
@@ -36,7 +39,7 @@ class LRUCache:
         self.timer = None
         self.lock = RLock()
 
-        if self.expires:
+        if self.expires_at:
             self._cleanup()
 
     def get(self, key: int) -> int:
@@ -51,26 +54,30 @@ class LRUCache:
         finally:
             self.lock.release()
 
-    def put(self, key: int, value: int) -> None:
+    def put(self, key, value) -> None:
         try:
-            self.lock.aquire()
+            self.lock.acquire()
             if key in self.cache:
                 self._remove(self.cache[key])
             node = Node(key, value)
             self._add(node)
-            self.cache[key] = node
             if len(self.cache) > self.size:
                 node = self.head.next
                 self._remove(node)
-                del self.cache[node.key]
         finally:
             self.lock.release()
     
     def _remove(self, node) -> None:
-        next = node.next
-        prev = node.prev
-        prev.next = next
-        next.prev = prev
+        try: 
+            self.lock.acquire()
+            next = node.next
+            prev = node.prev
+            prev.next = next
+            next.prev = prev
+            del self.cache[node.key]
+        finally:
+            self.lock.release()
+
     
     def _add(self, node):
         try:
@@ -80,13 +87,14 @@ class LRUCache:
             self.tail.prev = node
             node.prev = prev
             node.next = self.tail
+            self.cache[node.key] = node
             node._update_last_used_time()
         finally:
             self.lock.release()
 
     def _cleanup(self):
         self._clear_cache_item()
-        timer = Timer(self.expires, self._cleanup)
+        timer = Timer(self.expires_at, self._cleanup)
         timer.start()
         self.timer = timer
 
@@ -96,10 +104,20 @@ class LRUCache:
             return
         try:
             self.lock.acquire()
-            clear_time = time() - self.expires
-            node = head.next
+            clear_time = time() - self.expires_at
+            node = self.head.next
             while not node is self.tail and node.last_used_time < clear_time:
                 self._remove(node)
+                node = self.head.next
         finally:
             self.lock.release()
 
+    def _size(self):
+        return self.size
+
+
+    def stop_timer(self):
+        self.timer.cancel()
+
+    def keys(self):
+        return self.cache.keys()
