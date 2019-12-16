@@ -28,8 +28,8 @@ class Node:
 
     
 class LRUCache:
-    def __init__(self, size: int, expires_at=None):
-        self.size = size
+    def __init__(self, max_size: int, expires_at=None):
+        self.max_size = max_size
         self.expires_at = expires_at
         self.cache = dict()
         self.head = Node(0,0)
@@ -42,7 +42,7 @@ class LRUCache:
         if self.expires_at:
             self._cleanup()
 
-    def get(self, key: int) -> int:
+    def get(self, key)
         try:
             self.lock.acquire()
             if key in self.cache:
@@ -61,7 +61,7 @@ class LRUCache:
                 self._remove(self.cache[key])
             node = Node(key, value)
             self._add(node)
-            if len(self.cache) > self.size:
+            if len(self.cache) > self.max_size:
                 node = self.head.next
                 self._remove(node)
         finally:
@@ -112,12 +112,17 @@ class LRUCache:
         finally:
             self.lock.release()
 
-    def _size(self):
-        return self.size
+    def _max_size(self):
+        return self.max_size
+
+
+    def current_size(self):
+        return len(self.keys())
 
 
     def stop_timer(self):
         self.timer.cancel()
+    
 
     def keys(self):
         return self.cache.keys()
