@@ -7,6 +7,6 @@ class OrderError(Exception):
 
 class InvalidFormat(Exception):
 	'''
-	 Raised when the input format is different from (x1,x2)
+	 Raised when the input format is different from this -> (x1,x2)
 	'''
 	pass
