@@ -8,9 +8,8 @@
 # updating its position in the ordering. These nodes are also placed in the
 # hash table under their associated key. The hash table allows efficient
 # lookup of values by key.
-# the cache can expire if a timeout is provided each time an item is used
-# is timeout value is automatically reset. An item expires when he's not used 
-# and it timeout is reached.
+# the cache can expire if a timeout is provided. Each time an item is used
+# its timeout value is automatically reset.
 
 from threading import Timer, RLock
 from time import time
